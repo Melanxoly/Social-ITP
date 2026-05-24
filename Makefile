@@ -102,13 +102,13 @@ train:
 		--augment_train \
 		--augment_scope topic \
 		--augment_target max \
-		--augment_final_multiplier $(MULTIPLIER) `
-		--augment_max_multiplier 0 `
-		--augment_methods duplicate,prefix,casing,synonym,mixed `
+		--augment_final_multiplier $(MULTIPLIER) \
+		--augment_max_multiplier 0 \
+		--augment_methods duplicate,prefix,casing,synonym,mixed \
 		--augment_prefixes "oh,|well,|actually,|literally,|to be fair,|honestly,|tbh,|imo," \
-		--augment_case_modes lower,upper,title `
-		--augment_chain_min 1 `
-		--augment_chain_max 2 `
+		--augment_case_modes lower,upper,title \
+		--augment_chain_min 1 \
+		--augment_chain_max 2 \
 		--stance_confidence_threshold $(THR)
 
 sweep-stance-thresholds:
