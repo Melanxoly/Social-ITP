@@ -20,7 +20,7 @@ social_itp_project/
 │       ├── tesla/
 │       └── trump/
 ├── outputs/
-└── requirements_all.txt
+└── requirements.txt
 ```
 
 你需要额外复制：
