@@ -177,7 +177,7 @@ eval-two-stage:
 		--split_name test \
 		--max_length $(MAX_LENGTH) \
 		--per_device_eval_batch_size $(EVAL_BATCH) \
-		--stage1_threshold $(THR) \
+		--stage1_threshold 0.60 \
 		--threshold_values $(THRESHOLDS)
 
 sweep-stage1:
@@ -197,5 +197,5 @@ clean:
 	@$(call RM_RF,outputs/stance_dataset_stage1_depth1)
 	@$(call RM_RF,outputs/stance_classifier/*_eval_thr*)
 
-all: install-requirements train-two-stage eval-two-stage sweep-stage1
+all: install-requirements eval-two-stage
 	@echo "Completed 'make all' (install -> build_dataset -> train -> sweep-stance-thresholds)"
