@@ -1,0 +1,23 @@
+# Core data/metrics
+numpy>=1.24.0
+pandas>=2.0.0
+scikit-learn>=1.3.0
+joblib>=1.3.0
+
+# Transformer fine-tuning
+# NOTE: transformers recently requires torch>=2.6 for unsafe torch.load paths.
+# This project also forces safetensors loading by default.
+torch>=2.6.0
+transformers>=4.40.0
+accelerate>=0.29.0
+safetensors>=0.4.3
+sentencepiece>=0.1.99
+protobuf>=3.20.0
+
+# Optional embedding baselines
+sentence-transformers>=2.7.0
+
+# Optional Qwen / DashScope OpenAI-compatible comparison
+openai>=1.30.0
+
+tqdm>=4.66.0

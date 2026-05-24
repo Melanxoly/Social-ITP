@@ -1,0 +1,35 @@
+# Recommended current stance-classifier pipeline.
+# Copy your data/MCSD directory separately to the new machine.
+
+data:
+  data_root: data/MCSD
+  topics: [biden, Bitcoin, BMW, costco, tesla, trump]
+  dataset_dir: outputs/stance_dataset_stage1_depth1
+  input_template: stage1
+  max_ancestor_depth: 1
+  split_by_topic: true
+
+transformer_three_class:
+  model_name: microsoft/deberta-v3-base
+  out_dir: outputs/stance_classifier/deberta_v3_base_three_class_aug_cons
+  max_length: 384
+  learning_rate: 2.0e-5
+  num_train_epochs: 3
+  per_device_train_batch_size: 8
+  per_device_eval_batch_size: 16
+  fp16: true
+  augmentation:
+    augment_train: true
+    augment_scope: topic
+    augment_target: max
+    augment_methods: duplicate,prefix
+    augment_prefixes: "oh,|well,|actually,|literally,|to be fair,|honestly,"
+    augment_max_multiplier: 3.0
+  conservative_decoding:
+    stance_confidence_threshold: 0.60
+    none_confidence_policy: keep
+
+qwen_comparison:
+  model: qwen-plus
+  base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  n_per_topic_label: 10

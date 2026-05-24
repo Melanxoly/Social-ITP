@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+*.key
+*.pem
+*_api_key*
+secrets/
+config.local.*
+
+# Data
+data/
+datasets/
+*.hdf5
+*.h5
+*.parquet
+*.pkl
+*.pickle
+
+# Experiment outputs
+outputs/
+runs/
+logs/
+*.log
+*.jsonl
+
+# Large generated files
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# Cache
+.cache/
+.pytest_cache/
+.mypy_cache/
