@@ -39,7 +39,7 @@ outputs/stance_classifier/deberta_v3_base_three_class/model/final/   # 如果要
 ```powershell
 conda create -n social_itp python=3.10 -y
 conda activate social_itp
-pip install -r .\requirements_all.txt
+pip install -r .\requirements.txt
 ```
 
 如果你的 GPU/CUDA 环境有特殊要求，可以先按 PyTorch 官网方式安装对应 CUDA 版 torch，再执行：
@@ -82,7 +82,7 @@ $env:KMP_DUPLICATE_LIB_OK="TRUE"
 python .\scripts\train_transformer_stance_classifier.py `
   --task three_class `
   --dataset_dir .\outputs\stance_dataset_stage1_depth1 `
-  --out_dir .\outputs\stance_classifier\deberta_v3_base_three_class_aug_cons `
+  --out_dir .\outputs\stance_classifier\deberta_v3_base_three_class `
   --model_name microsoft/deberta-v3-base `
   --max_length 384 `
   --learning_rate 2e-5 `
