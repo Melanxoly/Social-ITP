@@ -1,0 +1,20 @@
+# Recommended aggressive augmentation configuration.
+# Use with scripts/train_transformer_stance_classifier.py
+
+augmentation:
+  augment_train: true
+  augment_scope: topic
+  augment_target: max
+  # After balancing to the max class inside each topic, expand every class to 3x that balanced count.
+  # Example: 80,200,300 -> 900,900,900, if augment_max_multiplier is disabled.
+  augment_final_multiplier: 3.0
+  # Disable original-count cap, otherwise tiny classes such as 80 would be capped by original*3.
+  augment_max_multiplier: 0
+  augment_methods: duplicate,prefix,casing,synonym,mixed
+  augment_prefixes: "oh,|well,|actually,|literally,|to be fair,|honestly,|tbh,|imo,"
+  augment_case_modes: lower,upper,title
+  augment_chain_min: 1
+  augment_chain_max: 2
+
+decoding:
+  stance_confidence_threshold: 0.50

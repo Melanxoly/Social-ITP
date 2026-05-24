@@ -86,9 +86,14 @@ def main() -> None:
     ap.add_argument("--augment_train", action="store_true", help="Oversample minority training classes. Evaluation splits are never augmented.")
     ap.add_argument("--augment_scope", choices=["topic", "global"], default="topic", help="Balance labels inside each topic or globally.")
     ap.add_argument("--augment_target", choices=["max", "median", "none"], default="max", help="Target count within each augmentation scope.")
-    ap.add_argument("--augment_methods", default="duplicate,prefix", help="Comma-separated methods: duplicate,prefix")
-    ap.add_argument("--augment_prefixes", default="oh,|well,|actually,|literally,|to be fair,|honestly,", help="Pipe-separated safe prefixes for prefix augmentation.")
-    ap.add_argument("--augment_max_multiplier", type=float, default=3.0, help="Cap final per-label count to original_count * this multiplier.")
+    ap.add_argument("--augment_methods", default="duplicate,prefix", help="Comma-separated methods: duplicate,prefix,casing,synonym,mixed")
+    ap.add_argument("--augment_prefixes", default="oh,|well,|actually,|literally,|to be fair,|honestly,|tbh,|imo,", help="Pipe-separated safe prefixes for prefix augmentation.")
+    ap.add_argument("--augment_synonyms", default="", help="Optional pipe-separated substitutions such as you=>u|to be honest=>tbh. Empty uses built-in safe defaults.")
+    ap.add_argument("--augment_case_modes", default="lower,upper,title", help="Comma-separated case modes for casing augmentation: lower,upper,title.")
+    ap.add_argument("--augment_max_multiplier", type=float, default=3.0, help="Cap final per-label count to original_count * this multiplier. Set <=0 to disable cap.")
+    ap.add_argument("--augment_final_multiplier", type=float, default=1.0, help="Multiplier applied after balancing target. Example: counts 80,200,300 with target=max and final_multiplier=3 -> desired 900,900,900 before cap.")
+    ap.add_argument("--augment_chain_min", type=int, default=1, help="For method=mixed, minimum number of transforms to compose.")
+    ap.add_argument("--augment_chain_max", type=int, default=2, help="For method=mixed, maximum number of transforms to compose.")
     # Conservative decoding for three_class evaluation.
     ap.add_argument("--stance_confidence_threshold", type=float, default=0.0, help="For three_class: if raw favor/against confidence is below this threshold, output none. 0 disables.")
     ap.add_argument("--none_confidence_policy", choices=["keep"], default="keep", help="For low-confidence raw none predictions, keep none and only flag them.")
@@ -142,8 +147,13 @@ def main() -> None:
         target=args.augment_target,
         methods=args.augment_methods,
         prefixes=args.augment_prefixes,
+        synonyms=args.augment_synonyms,
+        case_modes=args.augment_case_modes,
         seed=args.seed,
         max_multiplier=args.augment_max_multiplier,
+        final_multiplier=args.augment_final_multiplier,
+        chain_min=args.augment_chain_min,
+        chain_max=args.augment_chain_max,
     )
     if args.augment_train:
         print("[INFO] training augmentation enabled")
@@ -153,6 +163,9 @@ def main() -> None:
             "added": len(train_rows) - original_train_rows_count,
             "scope": args.augment_scope,
             "target": args.augment_target,
+            "final_multiplier": args.augment_final_multiplier,
+            "methods": args.augment_methods,
+            "max_multiplier": args.augment_max_multiplier,
         }, ensure_ascii=False, indent=2))
 
     use_safetensors = not args.no_safetensors
