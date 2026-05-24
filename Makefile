@@ -169,7 +169,7 @@ train-two-stage-balanced:
 		--fp16
 
 eval-two-stage:
-	$(PYTHON) scripts/evaluate_two_stage_transformer_stance_classifier.py \
+	$(PY) scripts/evaluate_two_stage_transformer_stance_classifier.py \
 		--dataset_jsonl $(OUT_DIR)/test.jsonl \
 		--stage1_model_dir $(TRAIN_OUT_DIR_TWOSTAGE)/stage1_model/final \
 		--stage2_model_dir $(TRAIN_OUT_DIR_TWOSTAGE)/stage2_model/final \
@@ -181,7 +181,7 @@ eval-two-stage:
 		--threshold_values $(THRESHOLDS)
 
 sweep-stage1:
-	$(PYTHON) scripts/evaluate_two_stage_transformer_stance_classifier.py \
+	$(PY) scripts/evaluate_two_stage_transformer_stance_classifier.py \
 		--dataset_jsonl $(OUT_DIR)/test.jsonl \
 		--stage1_model_dir $(TRAIN_OUT_DIR_TWOSTAGE)/stage1_model/final \
 		--stage2_model_dir $(TRAIN_OUT_DIR_TWOSTAGE)/stage2_model/final \
