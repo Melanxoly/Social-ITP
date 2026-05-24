@@ -1,0 +1,26 @@
+# Reference config for two-stage stance classifier.
+# Use Makefile.two_stage or scripts/train_two_stage_transformer_stance_classifier.py.
+
+data:
+  dataset_dir: outputs/stance_dataset_stage1_depth1
+
+model:
+  model_name: microsoft/deberta-v3-base
+  max_length: 384
+  learning_rate: 2.0e-5
+  epochs: 3
+  train_batch_size: 8
+  eval_batch_size: 16
+
+stage1:
+  task: none_vs_has_stance
+  threshold: 0.50
+  threshold_values: [0.3, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7]
+
+stage2:
+  task: favor_vs_against
+
+optional_balance:
+  balance_train: false
+  balance_scope: topic
+  balance_max_multiplier: 3.0

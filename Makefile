@@ -39,14 +39,18 @@ MAX_ANCESTOR_DEPTH ?= 1
 
 MODEL_NAME ?= microsoft/deberta-v3-base
 TRAIN_OUT_DIR ?= outputs/stance_classifier/deberta_v3_base_three_class_aug_x3_thr050
+TRAIN_OUT_DIR_TWOSTAGE ?= outputs/stance_classifier/deberta_v3_base_two_stage_t050
 MAX_LENGTH ?= 384
 LR ?= 2e-5
 EPOCHS ?= 3
 TRAIN_BATCH ?= 8
 EVAL_BATCH ?= 16
+GRAD_ACCUM ?= 1
 FP16 ?= --fp16
 MULTIPLIER ?= 3.0
 THR ?= 0.50
+THRESHOLDS ?= 0.0,0.3,0.4,0.45,0.5,0.55,0.6,0.65,0.7
+BALANCE_SCOPE ?= topic
 
 .PHONY: all help setup install-requirements build_dataset train eval compare_qwen clean
 
@@ -119,7 +123,7 @@ sweep-stance-thresholds:
 		--split_name test \
 		--max_length $(MAX_LENGTH) \
 		--per_device_eval_batch_size $(EVAL_BATCH) \
-		--thresholds 0.0,0.5,0.55,0.6,0.65,0.7,0.75
+		--thresholds $(THRESHOLDS) \
 
 compare_qwen:
 	$(PY) scripts/compare_qwen_and_transformer_classifier.py \
@@ -131,11 +135,67 @@ compare_qwen:
 		--qwen_model qwen-plus \
 		--qwen_base_url https://dashscope.aliyuncs.com/compatible-mode/v1
 
+train-two-stage:
+	$(PY) scripts/train_two_stage_transformer_stance_classifier.py \
+		--dataset_dir $(OUT_DIR) \
+		--out_dir $(TRAIN_OUT_DIR_TWOSTAGE) \
+		--model_name $(MODEL_NAME) \
+		--max_length $(MAX_LENGTH) \
+		--learning_rate $(LR) \
+		--num_train_epochs $(EPOCHS) \
+		--per_device_train_batch_size $(TRAIN_BATCH) \
+		--per_device_eval_batch_size $(EVAL_BATCH) \
+		--gradient_accumulation_steps $(GRAD_ACCUM) \
+		--stage1_threshold $(THR) \
+		--threshold_values $(THRESHOLDS) \
+		--fp16
+
+train-two-stage-balanced:
+	$(PY) scripts/train_two_stage_transformer_stance_classifier.py \
+		--dataset_dir $(OUT_DIR) \
+		--out_dir $(TRAIN_OUT_DIR_TWOSTAGE)_balanced \
+		--model_name $(MODEL_NAME) \
+		--max_length $(MAX_LENGTH) \
+		--learning_rate $(LR) \
+		--num_train_epochs $(EPOCHS) \
+		--per_device_train_batch_size $(TRAIN_BATCH) \
+		--per_device_eval_batch_size $(EVAL_BATCH) \
+		--gradient_accumulation_steps $(GRAD_ACCUM) \
+		--stage1_threshold $(THR) \
+		--threshold_values $(THRESHOLDS) \
+		--balance_train \
+		--balance_scope $(BALANCE_SCOPE) \
+		--balance_max_multiplier $(MULTIPLIER) \
+		--fp16
+
+eval-two-stage:
+	$(PYTHON) scripts/evaluate_two_stage_transformer_stance_classifier.py \
+		--dataset_jsonl $(OUT_DIR)/test.jsonl \
+		--stage1_model_dir $(TRAIN_OUT_DIR_TWOSTAGE)/stage1_model/final \
+		--stage2_model_dir $(TRAIN_OUT_DIR_TWOSTAGE)/stage2_model/final \
+		--out_dir $(TRAIN_OUT_DIR_TWOSTAGE)/eval_t$(THR) \
+		--split_name test \
+		--max_length $(MAX_LENGTH) \
+		--per_device_eval_batch_size $(EVAL_BATCH) \
+		--stage1_threshold $(THR) \
+		--threshold_values $(THRESHOLDS)
+
+sweep-stage1:
+	$(PYTHON) scripts/evaluate_two_stage_transformer_stance_classifier.py \
+		--dataset_jsonl $(OUT_DIR)/test.jsonl \
+		--stage1_model_dir $(TRAIN_OUT_DIR_TWOSTAGE)/stage1_model/final \
+		--stage2_model_dir $(TRAIN_OUT_DIR_TWOSTAGE)/stage2_model/final \
+		--out_dir $(TRAIN_OUT_DIR_TWOSTAGE)/stage1_threshold_sweep \
+		--split_name test \
+		--max_length $(MAX_LENGTH) \
+		--per_device_eval_batch_size $(EVAL_BATCH) \
+		--stage1_threshold $(THR) \
+		--threshold_values $(THRESHOLDS)
 
 clean:
 	@echo "Removing common outputs (be careful)"
 	@$(call RM_RF,outputs/stance_dataset_stage1_depth1)
 	@$(call RM_RF,outputs/stance_classifier/*_eval_thr*)
 
-all: install-requirements build_dataset train sweep-stance-thresholds
+all: install-requirements train-two-stage eval-two-stage sweep-stage1
 	@echo "Completed 'make all' (install -> build_dataset -> train -> sweep-stance-thresholds)"
