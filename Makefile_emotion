@@ -1,0 +1,138 @@
+SHELL := /bin/bash
+
+# =========================
+# Config
+# =========================
+
+PYTHON ?= python
+
+DATASET_DIR ?= outputs/emotion_goemotions_3class_10k
+
+MODEL_NAME ?= microsoft/deberta-v3-base
+MODEL_OUT_DIR ?= outputs/emotion_classifier/deberta_v3_base_goemotions_3class_macro
+MODEL_FINAL_DIR ?= $(MODEL_OUT_DIR)/model/final
+
+MAX_LENGTH ?= 256
+LR ?= 2e-5
+EPOCHS ?= 4
+
+TRAIN_BS ?= 8
+EVAL_BS ?= 16
+
+TRAIN_PER_CLASS ?= 10000
+DEV_PER_CLASS ?= 1200
+TEST_PER_CLASS ?= 1200
+
+SEED ?= 42
+
+# 是否使用 fp16：有 CUDA 时建议为 1；CPU 或不支持 fp16 时改成 0
+USE_FP16 ?= 1
+
+# 是否使用小模型快速跑通
+# 用法：make quick
+SMALL_MODEL ?= distilroberta-base
+
+# 阈值评估列表
+THRESHOLDS ?= 0.55 0.60 0.65 0.70
+
+# =========================
+# Helpers
+# =========================
+
+ifeq ($(USE_FP16),1)
+	FP16_FLAG := --fp16
+else
+	FP16_FLAG :=
+endif
+
+.PHONY: all install build train eval eval-thresholds quick clean show-config
+
+# 默认：一次跑完整流程
+all: install build train eval-thresholds
+
+show-config:
+	@echo "PYTHON           = $(PYTHON)"
+	@echo "DATASET_DIR      = $(DATASET_DIR)"
+	@echo "MODEL_NAME       = $(MODEL_NAME)"
+	@echo "MODEL_OUT_DIR    = $(MODEL_OUT_DIR)"
+	@echo "MODEL_FINAL_DIR  = $(MODEL_FINAL_DIR)"
+	@echo "MAX_LENGTH       = $(MAX_LENGTH)"
+	@echo "LR               = $(LR)"
+	@echo "EPOCHS           = $(EPOCHS)"
+	@echo "TRAIN_BS         = $(TRAIN_BS)"
+	@echo "EVAL_BS          = $(EVAL_BS)"
+	@echo "USE_FP16         = $(USE_FP16)"
+	@echo "FP16_FLAG        = $(FP16_FLAG)"
+	@echo "THRESHOLDS       = $(THRESHOLDS)"
+
+install:
+	$(PYTHON) -m pip install -r requirements.txt
+
+build:
+	$(PYTHON) scripts/build_goemotions_three_class_dataset.py \
+		--out_dir $(DATASET_DIR) \
+		--train_per_class $(TRAIN_PER_CLASS) \
+		--dev_per_class $(DEV_PER_CLASS) \
+		--test_per_class $(TEST_PER_CLASS) \
+		--multi_label_policy skip_conflict \
+		--seed $(SEED) \
+		--allow_less
+
+train:
+	$(PYTHON) scripts/train_transformer_emotion_classifier.py \
+		--dataset_dir $(DATASET_DIR) \
+		--out_dir $(MODEL_OUT_DIR) \
+		--model_name $(MODEL_NAME) \
+		--max_length $(MAX_LENGTH) \
+		--learning_rate $(LR) \
+		--num_train_epochs $(EPOCHS) \
+		--per_device_train_batch_size $(TRAIN_BS) \
+		--per_device_eval_batch_size $(EVAL_BS) \
+		$(FP16_FLAG)
+
+# 单个阈值评估
+# 用法：
+# make eval THR=0.60
+eval:
+ifndef THR
+	$(error Please provide THR, e.g. make eval THR=0.60)
+endif
+	$(PYTHON) scripts/evaluate_transformer_emotion_classifier.py \
+		--dataset_jsonl $(DATASET_DIR)/test.jsonl \
+		--model_dir $(MODEL_FINAL_DIR) \
+		--out_dir $(MODEL_OUT_DIR)/eval_thr$(shell echo $(THR) | tr -d '.') \
+		--split_name test \
+		--max_length $(MAX_LENGTH) \
+		--emotion_confidence_threshold $(THR)
+
+# 依次评估多个阈值
+eval-thresholds:
+	@for thr in $(THRESHOLDS); do \
+		echo "Evaluating threshold $$thr"; \
+		$(PYTHON) scripts/evaluate_transformer_emotion_classifier.py \
+			--dataset_jsonl $(DATASET_DIR)/test.jsonl \
+			--model_dir $(MODEL_FINAL_DIR) \
+			--out_dir $(MODEL_OUT_DIR)/eval_thr$$(echo $$thr | tr -d '.') \
+			--split_name test \
+			--max_length $(MAX_LENGTH) \
+			--emotion_confidence_threshold $$thr; \
+	done
+
+# 快速跑通流程：使用小模型 distilroberta-base
+quick:
+	$(MAKE) all MODEL_NAME=$(SMALL_MODEL) \
+		MODEL_OUT_DIR=outputs/emotion_classifier/distilroberta_goemotions_3class \
+		TRAIN_BS=16 \
+		EVAL_BS=32 \
+		USE_FP16=0
+
+# 显存不足版本
+low-vram:
+	$(MAKE) all \
+		TRAIN_BS=4 \
+		EVAL_BS=8 \
+		USE_FP16=1
+
+clean:
+	rm -rf $(DATASET_DIR)
+	rm -rf $(MODEL_OUT_DIR)

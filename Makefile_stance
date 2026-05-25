@@ -32,7 +32,7 @@ endif
 
 DATA_ROOT ?= data/MCSD
 TOPICS ?= biden,Bitcoin,BMW,costco,tesla,trump
-OUT_DIR ?= outputs/stance_dataset_stage1_depth1
+OUT_DIR ?= outputs/stance_dataset
 SEED ?= 42
 INPUT_TEMPLATE ?= stage1
 MAX_ANCESTOR_DEPTH ?= 1
@@ -197,5 +197,5 @@ clean:
 	@$(call RM_RF,outputs/stance_dataset_stage1_depth1)
 	@$(call RM_RF,outputs/stance_classifier/*_eval_thr*)
 
-all: install-requirements eval-two-stage
+all: install-requirements train sweep-stance-thresholds
 	@echo "Completed 'make all' (install -> build_dataset -> train -> sweep-stance-thresholds)"

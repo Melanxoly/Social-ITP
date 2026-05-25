@@ -1,0 +1,24 @@
+exp_id: exp_003_ablation_dummy_toulmin
+seed: 42
+output_dir: outputs/exp_003_ablation_dummy_toulmin
+
+data:
+  data_root: ../data/MCSD
+  topics: [trump]
+  max_examples_per_topic: 20
+
+llm:
+  backend: qwen
+  model_name: qwen-plus-latest
+  api_key_env: DASHSCOPE_API_KEY
+
+world_model:
+  type: prompt
+
+evaluator:
+  type: rule_based
+
+policies:
+  - name: reactive
+    temperature: 0.4
+  - name: dummy_toulmin

@@ -1,0 +1,29 @@
+exp_id: exp_000_smoke_dummy
+seed: 42
+output_dir: outputs/exp_000_smoke_dummy
+
+data:
+  data_root: data/MCSD
+  topics: [trump]
+  max_examples_per_topic: 3
+  max_context_nodes: 60
+  max_reply_depth: 1
+  reply_window_hours: 48
+  min_replies: 1
+  num_bystanders: 3
+  max_node_text: 240
+  min_action_text_len: 2
+
+llm:
+  backend: dummy
+  model_name: dummy
+
+world_model:
+  type: dummy
+
+evaluator:
+  type: dummy
+
+policies:
+  - name: random
+  - name: dummy_toulmin

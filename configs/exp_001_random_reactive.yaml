@@ -1,0 +1,42 @@
+exp_id: exp_001_random_reactive
+seed: 42
+output_dir: outputs/exp_001_random_reactive
+
+data:
+  data_root: ../data/MCSD
+  topics: [trump, biden, tesla, Bitcoin, BMW, costco]
+  max_examples_per_topic: 50
+  max_context_nodes: 60
+  max_reply_depth: 1
+  reply_window_hours: 48
+  min_replies: 1
+  num_bystanders: 3
+  max_node_text: 240
+  min_action_text_len: 2
+
+llm:
+  backend: qwen
+  model_name: qwen-plus-latest
+  temperature: 0.4
+  max_retries: 2
+  retry_sleep_sec: 1.5
+  request_timeout_sec: 120.0
+  api_key_env: DASHSCOPE_API_KEY
+
+world_model:
+  type: prompt
+  prompt_builder:
+    max_graph_nodes: 30
+    max_recent_utterances: 3
+    max_text_len: 220
+    include_persona: true
+    include_bystanders: true
+    include_graph_edges: true
+
+evaluator:
+  type: rule_based
+
+policies:
+  - name: random
+  - name: reactive
+    temperature: 0.4
