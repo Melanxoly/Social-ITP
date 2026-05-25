@@ -1,0 +1,23 @@
+goemotions_dataset:
+  out_dir: outputs/emotion_goemotions_3class_5k
+  train_per_class: 5000
+  dev_per_class: 800
+  test_per_class: 800
+  multi_label_policy: skip_conflict
+  prefer_single_label: true
+  note: confusion is mapped to negative
+
+training:
+  model_name: microsoft/deberta-v3-base
+  out_dir: outputs/emotion_classifier/deberta_v3_base_goemotions_3class
+  max_length: 256
+  learning_rate: 2.0e-5
+  num_train_epochs: 3
+  per_device_train_batch_size: 8
+  per_device_eval_batch_size: 16
+  fp16: true
+  emotion_confidence_threshold: 0.0
+
+conservative_eval:
+  thresholds: [0.55, 0.60, 0.65, 0.70]
+  rule: raw positive/negative with confidence below threshold is decoded as neutral; low-confidence neutral remains neutral
